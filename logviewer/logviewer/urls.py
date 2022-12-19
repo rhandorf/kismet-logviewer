@@ -15,6 +15,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import include, path
+from django.http import HttpResponse
 
 urlpatterns = [
     path('', include('browse.urls')),
@@ -38,4 +39,5 @@ urlpatterns = [
     path('messagebus/last-time/0/messages.json', include('dbview.urls')),
     path('channels/channels.json', include('dbview.urls')),
     path('devices/views/all/devices.json', include('dbview.urls')),
+    path('eventbus/events.ws', include('dbview.urls')),
 ]
