@@ -3,7 +3,7 @@ from django.http import HttpResponse, HttpRequest
 import os
 
 def index(request, loadfile):
-    load_file = open('/home/rhandorf/kismet-logviewer/logviewer/static/'+request.path, mode='rb')
+    load_file = open('static/'+request.path, mode='rb')
     if loadfile[-2:] == "js":
         return HttpResponse(load_file, content_type='application/javascript')
     elif loadfile[-3:] == "css":

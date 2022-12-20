@@ -9,7 +9,7 @@ import pprint
 from django.views.decorators.csrf import csrf_exempt
 
 def load_db(query):
-    connection = sqlite3.connect("/home/rhandorf/kismet-logviewer/logviewer/logs/Kismet-20221208-22-56-36-1.kismet")
+    connection = sqlite3.connect("logs/Kismet-20221208-22-56-36-1.kismet")
     #connection.row_factory = lambda cursor, row: row[0]
     cursor = connection.cursor()
     rows = cursor.execute(query).fetchall()
@@ -20,10 +20,10 @@ def index(request):
     #if request.method == 'POST':
     #    print("GOT A POST")
     if request.path == "/devices/views/all_views.json":
-        all_views = open('/home/rhandorf/kismet-logviewer/logviewer/dbview/all_views.json')
+        all_views = open('dbview/all_views.json')
         return HttpResponse(all_views, content_type='text/json')
     elif request.path == "/system/user_status.json":
-        user_status = open('/home/rhandorf/kismet-logviewer/logviewer/dbview/user_status.json')
+        user_status = open('dbview/user_status.json')
         return HttpResponse(user_status, content_type='text/json')
     elif request.path == "/session/check_setup_ok":
         return HttpResponse('Login configured in user config')
@@ -31,10 +31,10 @@ def index(request):
         return HttpResponse('Login valid')
     elif request.path == "/dynamic.js":
         devices = load_db("select distinct(typestring) from datasources")
-        load_file = open('/home/rhandorf/kismet-logviewer/logviewer/static/dynamic.js')
+        load_file = open('static/dynamic.js')
         return HttpResponse(load_file, content_type='application/javascript')
     elif request.path == "/gps/location.json":
-        user_status = open('/home/rhandorf/kismet-logviewer/logviewer/dbview/gps_status.json')
+        user_status = open('dbview/gps_status.json')
         return HttpResponse(user_status, content_type='text/json')
     elif request.path == "/alerts/wrapped/last-time/0/alerts.json":
         alerts = list(load_db("select cast(json as text) from alerts"))
@@ -46,10 +46,10 @@ def index(request):
         alert_string = alert_string + "] ,\"kismet.alert.timestamp\": "+str(time.time())+"}"
         return HttpResponse(alert_string, content_type='text/json')
     elif request.path == "/phy/phy80211/ssids/views/ssids.json":
-        user_status = open('/home/rhandorf/kismet-logviewer/logviewer/dbview/ssids.json')
+        user_status = open('dbview/ssids.json')
         return HttpResponse(user_status, content_type='text/json')
     elif request.path == "/system/status.json":
-        user_status = open('/home/rhandorf/kismet-logviewer/logviewer/dbview/status.json')
+        user_status = open('dbview/status.json')
         return HttpResponse(user_status, content_type='text/json')
     elif request.path == "/alerts/alerts_view.json":
         #MAY NOT BE COMPLETE
@@ -87,7 +87,7 @@ def index(request):
         message_string = message_string + "], \"kismet.messagebus.timestamp\": "+str(time.time())+" }"
         return HttpResponse(message_string, content_type='text/json')
     elif request.path == "/channels/channels.json":
-        user_status = open('/home/rhandorf/kismet-logviewer/logviewer/dbview/channels.json')
+        user_status = open('dbview/channels.json')
         return HttpResponse(user_status, content_type='text/json')
     elif request.path == "/devices/views/all/devices.json":
         #gotta figure out paging
@@ -103,5 +103,11 @@ def index(request):
         return HttpResponse(dev_string, content_type='text/json')
     elif request.path == "/eventbus/events.ws":
         return HttpResponse("[]", content_type='text/json')
-
-
+    elif request.path == "/devices/multikey/as-object/devices.json":
+        print("here")
+        for key, value in request.POST.items():
+            print("-----")
+            print(key)
+            print(value)
+            print("-----")
+        return HttpResponse("[]", content_type='text/json')
