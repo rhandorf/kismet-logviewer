@@ -9,7 +9,8 @@ import pprint
 from django.views.decorators.csrf import csrf_exempt
 
 def load_db(query):
-    connection = sqlite3.connect("logs/Kismet-20221208-22-56-36-1.kismet")
+    dir_list = os.listdir("logs/")
+    connection = sqlite3.connect("logs/"+dir_list[0])
     #connection.row_factory = lambda cursor, row: row[0]
     cursor = connection.cursor()
     rows = cursor.execute(query).fetchall()
