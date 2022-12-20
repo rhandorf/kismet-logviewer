@@ -1,0 +1,7 @@
+oh geat, you're here...
+
+copy your kismet log file (ends in .kismet) to "logs" then run:
+
+python manage.py runserver 0.0.0.0:8000
+
+
