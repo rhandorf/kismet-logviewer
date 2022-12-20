@@ -18,12 +18,11 @@ def load_db(query):
 
 @csrf_exempt
 def index(request,devicename):
-    print("-------------")
-    print(request.path)
-    print(devicename)
-    print("-------------")
+    #print("-------------")
+    #print(request.path)
+    #print(devicename)
+    #print("-------------")
     if request.path[0:8] == "/devices":
-        print("FIXED")
         dev=list(load_db("select cast(device as text) from devices where devkey = \""+devicename+"\""))
         (dev_info,) = dev[0]
         #dev_string = "{ \"recordsTotal\": "+str(dev_count)+", \"data\": ["

@@ -96,20 +96,42 @@ def index(request):
         alert_string = alert_string + "] ,\"kismet.alert.timestamp\": "+str(time.time())+"}"
         return HttpResponse(alert_string, content_type='text/json')
     elif request.path == "/phy/phy80211/ssids/views/ssids.json":
-        user_status = open('dbview/ssids.json')
-        return HttpResponse(user_status, content_type='text/json')
+        ssid_count = list(load_db("select count(device) from devices where type='Wi-Fi AP'"))
+        ssid_list = "{ \"recordsTotal\": "+str(ssid_count[0][0])+", \"data\": ["
+        ssids = list(load_db("select cast(device as text) from devices where type='Wi-Fi AP'"))
+        for ssid in ssids:
+            (single_ssid,) = ssid
+            ssid_json = json.loads(single_ssid)
+            try:
+                ssid_list = ssid_list + "{"
+                ssid_list = ssid_list + "\"dot11.ssidgroup.first_time\": \"" + str(ssid_json['dot11.device']['dot11.device.last_beaconed_ssid_record']['dot11.advertisedssid.first_time']) +"\","
+                ssid_list = ssid_list + "\"dot11.ssidgroup.ssid_len\": \"" + str(ssid_json['dot11.device']['dot11.device.last_beaconed_ssid_record']['dot11.advertisedssid.ssidlen'])+"\","
+                ssid_list = ssid_list + "\"dot11.ssidgroup.crypt_set\": \"" + str(ssid_json['dot11.device']['dot11.device.last_beaconed_ssid_record']['dot11.advertisedssid.crypt_set'])+"\","
+                ssid_list = ssid_list + "\"dot11.ssidgroup.advertising_devices_len\": \"" + str(ssid_json['dot11.device']['dot11.device.num_advertised_ssids'])+"\","
+                ssid_list = ssid_list + "\"dot11.ssidgroup.probing_devices_len\": \"" + str(ssid_json['dot11.device']['dot11.device.num_probed_ssids'])+"\","
+                ssid_list = ssid_list + "\"dot11.ssidgroup.ssid\": \"" + str(ssid_json['dot11.device']['dot11.device.last_beaconed_ssid_record']['dot11.advertisedssid.ssid'])+"\","
+                ssid_list = ssid_list + "\"dot11.ssidgroup.responding_devices_len\": \"" + str(ssid_json['dot11.device']['dot11.device.last_beaconed_ssid_record']['dot11.advertisedssid.probe_response'])+"\","
+                ssid_list = ssid_list + "\"dot11.ssidgroup.last_time\": \"" + str(ssid_json['dot11.device']['dot11.device.last_beaconed_ssid_record']['dot11.advertisedssid.last_time'])+"\""
+                ssid_list = ssid_list + "},"
+            except:
+                ssid_list = ssid_list[:-1]
+                print("Skipping")
+        ssid_list = ssid_list[:-2]+ "}], \"draw\": 3, \"recordsFiltered\": "+str(ssid_count[0][0])+" }"
+        return HttpResponse(ssid_list, content_type='text/json')
     elif request.path == "/system/status.json":
         user_status = open('dbview/status.json')
         return HttpResponse(user_status, content_type='text/json')
     elif request.path == "/alerts/alerts_view.json":
         #MAY NOT BE COMPLETE
+        total_alerts=list(load_db("select count(json) from alerts"))
+        (alert_count,) = total_alerts[0]
         alerts = list(load_db("select cast(json as text) from alerts"))
-        alert_string="["
+        alert_string="{\"recordsTotal\": "+str(alert_count)+",\"data\": ["
         for alert in alerts:
             (single_alert,) = alert
             alert_string = alert_string + single_alert + ","
         alert_string = alert_string[:-1]
-        alert_string = alert_string + "]"
+        alert_string = alert_string + "], \"draw\": 6,\"recordsFiltered\": "+str(alert_count)+"}"
         return HttpResponse(alert_string, content_type='text/json')
     elif request.path == "/messagebus/last-time/0/messages.json":
         messages = list(load_db("select * from messages DESC limit 30"))
@@ -130,7 +152,7 @@ def index(request):
                 flag = 20
             if message[3] == "ERROR":
                 flag = 20
-            message_string = message_string + "\"kismet.messagebus.message_flags\": \"" + flag + "\","
+            message_string = message_string + "\"kismet.messagebus.message_flags\": \"" + str(flag) + "\","
             message_string = message_string + "\"kismet.messagebus.message_time\": \"" + str(message[0]) + "\""
             message_string = message_string + "},"
         message_string = message_string[:-1]
@@ -154,21 +176,32 @@ def index(request):
         total_dev=list(load_db("select count(device) from devices"))
         (dev_count,) = total_dev[0]
         dev_string = "{ \"recordsTotal\": "+str(dev_count)+", \"data\": ["
-        dev_list = list(load_db("select cast(device as text) from devices limit 54"))
+        dev_list = list(load_db("select cast(device as text) from devices limit 126"))
         for device in dev_list:
             (dev,) = device
             dev_string = dev_string + dev + ","
         dev_string = dev_string[:-1]
         dev_string = dev_string + "],\"draw\": 5,\"recordsFiltered\": "+str(dev_count)+"}"
-        #dev_string = open('dbview/devices.json')
         return HttpResponse(dev_string, content_type='text/json')
     elif request.path == "/eventbus/events.ws":
         return HttpResponse("[]", content_type='text/json')
     elif request.path == "/devices/multikey/as-object/devices.json":
-        print("here")
+        #ClientMap incomplete.... figure out where the rest of the JSON comes from
+        search_json = ""
+        multikey = "{"
         for key, value in request.POST.items():
-            print("-----")
-            print(key)
-            print(value)
-            print("-----")
-        return HttpResponse("[]", content_type='text/json')
+            search_json=json.loads(value)
+            for device in search_json['devices']:
+                device_json = list(load_db("select cast(device as text) from devices where devkey='"+str(device)+"'"))
+                (tmp,) = device_json
+                device_json_x = json.loads(str(tmp[0]))
+                multikey = multikey + "\""+str(device)+"\": {"
+                for field in search_json['fields']:
+                    if (field[0:6] == "kismet"):
+                        multikey = multikey + "\""+field+"\": \""+device_json_x[field]+"\","
+                multikey = multikey + "\"dot11.device.client_map\": {},"
+                multikey = multikey[:-1]
+                multikey = multikey + "},"
+        multikey = multikey[:-1]
+        multikey = multikey + "}"
+        return HttpResponse(multikey, content_type='text/json')
