@@ -42,4 +42,5 @@ urlpatterns = [
     path('eventbus/events.ws', include('dbview.urls')),
     path('devices/by-key/<str:devicename>/device.json', include('devices.urls')),
     path('devices/multikey/as-object/devices.json', include('dbview.urls')),
+    path('datasource/by-uuid/<str:devicename>/source.json', include('devices.urls')),
 ]

@@ -21,8 +21,57 @@ def index(request):
     #if request.method == 'POST':
     #    print("GOT A POST")
     if request.path == "/devices/views/all_views.json":
-        all_views = open('dbview/all_views.json')
-        return HttpResponse(all_views, content_type='text/json')
+        uuid_members="["
+        dev_count=list(load_db("select count(device) from devices where type='Wi-Fi AP'"))
+        (devcount,) = dev_count[0]
+        uuid_members = uuid_members + "{ \"kismet.devices.view.description\": \"IEEE802.11 Access Points\", \"kismet.devices.view.id\": \"phydot11_accesspoints\", \"kismet.devices.view.size\": "+str(devcount)+" },"
+        dev_count=list(load_db("select count(device) from devices where phyname='IEEE802.11'"))
+        (devcount,) = dev_count[0]
+        uuid_members = uuid_members + "{ \"kismet.devices.view.description\": \"IEEE802.11 devices\", \"kismet.devices.view.id\": \"phy-IEEE802.11\", \"kismet.devices.view.size\": "+str(devcount)+" },"
+        dev_count=list(load_db("select count(device) from devices where type='RTL433'"))
+        (devcount,) = dev_count[0]
+        uuid_members = uuid_members + "{ \"kismet.devices.view.description\": \"RTL433 devices\", \"kismet.devices.view.id\": \"phy-RTL433\", \"kismet.devices.view.size\": "+str(devcount)+" },"
+        dev_count=list(load_db("select count(device) from devices where type='Z-wave'"))
+        (devcount,) = dev_count[0]
+        uuid_members = uuid_members + "{ \"kismet.devices.view.description\": \"Z-Wave devices\", \"kismet.devices.view.id\": \"phy-Z-Wave\", \"kismet.devices.view.size\": "+str(devcount)+" },"
+        dev_count=list(load_db("select count(device) from devices where type='BR/EDR'"))
+        (devcount,) = dev_count[0]
+        uuid_members = uuid_members + "{ \"kismet.devices.view.description\": \"Bluetooth devices\", \"kismet.devices.view.id\": \"phy-Bluetooth\", \"kismet.devices.view.size\": "+str(devcount)+" },"
+        dev_count=list(load_db("select count(device) from devices where type='UAV'"))
+        (devcount,) = dev_count[0]
+        uuid_members = uuid_members + "{ \"kismet.devices.view.description\": \"UAV devices\", \"kismet.devices.view.id\": \"phy-UAV\", \"kismet.devices.view.size\": "+str(devcount)+" },"
+        dev_count=list(load_db("select count(device) from devices where type='NrfMousejack'"))
+        (devcount,) = dev_count[0]
+        uuid_members = uuid_members + "{ \"kismet.devices.view.description\": \"NrfMousejack devices\", \"kismet.devices.view.id\": \"phy-NrfMousejack\", \"kismet.devices.view.size\": "+str(devcount)+"},"
+        dev_count=list(load_db("select count(device) from devices where type='BTLE'"))
+        (devcount,) = dev_count[0]
+        uuid_members = uuid_members + "{ \"kismet.devices.view.description\": \"BTLE devices\", \"kismet.devices.view.id\": \"phy-BTLE\", \"kismet.devices.view.size\": "+str(devcount)+" },"
+        dev_count=list(load_db("select count(device) from devices where phyname='AMR'"))
+        (devcount,) = dev_count[0]
+        uuid_members = uuid_members + "{ \"kismet.devices.view.description\": \"RTLAMR devices\", \"kismet.devices.view.id\": \"phy-RTLAMR\", \"kismet.devices.view.size\": "+str(devcount)+" },"
+        dev_count=list(load_db("select count(device) from devices where phyname='ADSB'"))
+        (devcount,) = dev_count[0]
+        uuid_members = uuid_members + "{ \"kismet.devices.view.description\": \"RTLADSB devices\", \"kismet.devices.view.id\": \"phy-RTLADSB\", \"kismet.devices.view.size\": "+str(devcount)+" },"
+        dev_count=list(load_db("select count(device) from devices where phyname='802.15.4'"))
+        (devcount,) = dev_count[0]
+        uuid_members = uuid_members + "{ \"kismet.devices.view.description\": \"802.15.4 devices\", \"kismet.devices.view.id\": \"phy-802.15.4\", \"kismet.devices.view.size\": "+str(devcount)+" },"
+        dev_count=list(load_db("select count(device) from devices where phyname='RADIATION'"))
+        (devcount,) = dev_count[0]
+        uuid_members = uuid_members + "{ \"kismet.devices.view.description\": \"RADIATION devices\", \"kismet.devices.view.id\": \"phy-RADIATION\", \"kismet.devices.view.size\": "+str(devcount)+" },"
+        total_dev=list(load_db("select count(device) from devices"))
+        (devcount,) = total_dev[0]
+        uuid_members=uuid_members+"{ \"kismet.devices.view.description\": \"All devices\", \"kismet.devices.view.id\": \"all\", \"kismet.devices.view.size\": "+str(devcount)+" },"
+        uuid_list = list(load_db("select uuid from datasources"))
+        for uuid in uuid_list:
+            (single_uuid,) = uuid
+            uuid_count = list(load_db("select count(*) from data where datasource='"+str(single_uuid)+"'"))
+            (single_uuid_count,) = uuid_count[0]
+            uuid_members = uuid_members + "{\"kismet.devices.view.description\": \"Devices seen by datasource "+single_uuid+"\","
+            uuid_members = uuid_members + "\"kismet.devices.view.id\": \"seenby-"+single_uuid+"\","
+            uuid_members = uuid_members + "\"kismet.devices.view.size\": "+str(single_uuid_count)+"},"
+        uuid_members=uuid_members[:-1]
+        uuid_members=uuid_members+"]"
+        return HttpResponse(uuid_members, content_type='text/json')
     elif request.path == "/system/user_status.json":
         user_status = open('dbview/user_status.json')
         return HttpResponse(user_status, content_type='text/json')
@@ -91,16 +140,27 @@ def index(request):
         user_status = open('dbview/channels.json')
         return HttpResponse(user_status, content_type='text/json')
     elif request.path == "/devices/views/all/devices.json":
+        #for key, value in request.POST.items():
+        #    #print("-----")
+        #    print(key+" = "+value)
+        #    #print(value)
+        #    if key == "draw":
+        #        print("-----")
+        #        print("DRAW")
+        #        print(value)
+        #        print("-----")
         #gotta figure out paging
+
         total_dev=list(load_db("select count(device) from devices"))
         (dev_count,) = total_dev[0]
         dev_string = "{ \"recordsTotal\": "+str(dev_count)+", \"data\": ["
-        dev_list = list(load_db("select cast(device as text) from devices limit 50"))
+        dev_list = list(load_db("select cast(device as text) from devices limit 54"))
         for device in dev_list:
             (dev,) = device
             dev_string = dev_string + dev + ","
         dev_string = dev_string[:-1]
         dev_string = dev_string + "],\"draw\": 5,\"recordsFiltered\": "+str(dev_count)+"}"
+        #dev_string = open('dbview/devices.json')
         return HttpResponse(dev_string, content_type='text/json')
     elif request.path == "/eventbus/events.ws":
         return HttpResponse("[]", content_type='text/json')
