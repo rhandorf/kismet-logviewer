@@ -11,7 +11,6 @@ from django.views.decorators.csrf import csrf_exempt
 def load_db(query):
     dir_list = os.listdir("logs/")
     connection = sqlite3.connect("logs/"+dir_list[0])
-    #connection.row_factory = lambda cursor, row: row[0]
     cursor = connection.cursor()
     rows = cursor.execute(query).fetchall()
     return(rows)
@@ -73,6 +72,7 @@ def index(request):
         uuid_members=uuid_members+"]"
         return HttpResponse(uuid_members, content_type='text/json')
     elif request.path == "/system/user_status.json":
+        #Hardcoded for now
         user_status = open('dbview/user_status.json')
         return HttpResponse(user_status, content_type='text/json')
     elif request.path == "/session/check_setup_ok":
@@ -80,10 +80,12 @@ def index(request):
     elif request.path == "/session/check_login":
         return HttpResponse('Login valid')
     elif request.path == "/dynamic.js":
+        #INCOMPLETE - read the devices and create a dynamic.js output
         devices = load_db("select distinct(typestring) from datasources")
         load_file = open('static/dynamic.js')
         return HttpResponse(load_file, content_type='application/javascript')
     elif request.path == "/gps/location.json":
+        #hardcoded cus it doesnt matter
         user_status = open('dbview/gps_status.json')
         return HttpResponse(user_status, content_type='text/json')
     elif request.path == "/alerts/wrapped/last-time/0/alerts.json":
@@ -107,6 +109,7 @@ def index(request):
                 ssid_list = ssid_list + "\"dot11.ssidgroup.first_time\": \"" + str(ssid_json['dot11.device']['dot11.device.last_beaconed_ssid_record']['dot11.advertisedssid.first_time']) +"\","
                 ssid_list = ssid_list + "\"dot11.ssidgroup.ssid_len\": \"" + str(ssid_json['dot11.device']['dot11.device.last_beaconed_ssid_record']['dot11.advertisedssid.ssidlen'])+"\","
                 ssid_list = ssid_list + "\"dot11.ssidgroup.crypt_set\": \"" + str(ssid_json['dot11.device']['dot11.device.last_beaconed_ssid_record']['dot11.advertisedssid.crypt_set'])+"\","
+                ssid_list = ssid_list + "\"dot11.ssidgroup.hash\": \"" + str(ssid_json['dot11.device']['dot11.device.last_beaconed_ssid_record']['dot11.advertisedssid.ssid_hash'])+"\","
                 ssid_list = ssid_list + "\"dot11.ssidgroup.advertising_devices_len\": \"" + str(ssid_json['dot11.device']['dot11.device.num_advertised_ssids'])+"\","
                 ssid_list = ssid_list + "\"dot11.ssidgroup.probing_devices_len\": \"" + str(ssid_json['dot11.device']['dot11.device.num_probed_ssids'])+"\","
                 ssid_list = ssid_list + "\"dot11.ssidgroup.ssid\": \"" + str(ssid_json['dot11.device']['dot11.device.last_beaconed_ssid_record']['dot11.advertisedssid.ssid'])+"\","
@@ -119,10 +122,11 @@ def index(request):
         ssid_list = ssid_list[:-2]+ "}], \"draw\": 3, \"recordsFiltered\": "+str(ssid_count[0][0])+" }"
         return HttpResponse(ssid_list, content_type='text/json')
     elif request.path == "/system/status.json":
+        #Hardcoded - Setup for other users
         user_status = open('dbview/status.json')
         return HttpResponse(user_status, content_type='text/json')
     elif request.path == "/alerts/alerts_view.json":
-        #MAY NOT BE COMPLETE
+        #INCOMPLETE - Check device Mappings
         total_alerts=list(load_db("select count(json) from alerts"))
         (alert_count,) = total_alerts[0]
         alerts = list(load_db("select cast(json as text) from alerts"))
@@ -162,15 +166,6 @@ def index(request):
         user_status = open('dbview/channels.json')
         return HttpResponse(user_status, content_type='text/json')
     elif request.path == "/devices/views/all/devices.json":
-        #for key, value in request.POST.items():
-        #    #print("-----")
-        #    print(key+" = "+value)
-        #    #print(value)
-        #    if key == "draw":
-        #        print("-----")
-        #        print("DRAW")
-        #        print(value)
-        #        print("-----")
         #gotta figure out paging
 
         total_dev=list(load_db("select count(device) from devices"))
