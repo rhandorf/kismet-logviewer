@@ -33,12 +33,14 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'eventbus',
 ]
 
 MIDDLEWARE = [
@@ -143,4 +145,6 @@ TEMPLATES = [
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-ALLOWED_HOSTS = ['sdr-cabinet']
+ALLOWED_HOSTS = ['sdr-cabinet', 'sdr-cabinet.dyn.spangdorfia.com']
+
+ASGI_APPLICATION = 'logviewer.asgi.application'

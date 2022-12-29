@@ -39,9 +39,9 @@ urlpatterns = [
     path('messagebus/last-time/0/messages.json', include('dbview.urls')),
     path('channels/channels.json', include('dbview.urls')),
     path('devices/views/all/devices.json', include('dbview.urls')),
-    path('eventbus/events.ws', include('dbview.urls')),
     path('devices/by-key/<str:devicename>/device.json', include('devices.urls')),
     path('devices/multikey/as-object/devices.json', include('dbview.urls')),
     path('datasource/by-uuid/<str:devicename>/source.json', include('devices.urls')),
     path('phy/phy80211/ssids/by-hash/<str:devicename>/ssid.json', include('devices.urls')),
+    path('eventbus/', include('eventbus.urls')),
 ]

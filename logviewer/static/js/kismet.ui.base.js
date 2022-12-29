@@ -249,9 +249,9 @@ exports.drawPackets = function(dyncolumn, table, row) {
         { type: "bar",
             width: "100px",
             height: 12,
-            barColor: '#000000',
-            nullColor: '#000000',
-            zeroColor: '#000000'
+            barColor: kismet_theme.sparkline_main,
+            nullColor: kismet_theme.sparkline_main,
+            zeroColor: kismet_theme.sparkline_main,
         });
 }
 
@@ -262,7 +262,9 @@ kismet_ui.AddDeviceColumn('column_name', {
     description: 'Device name',
     width: "150px",
     renderfunc: function(d, t, r, m) {
-        return kismet.censorMAC(d);
+        d = kismet.censorMAC(d);
+        return kismet.censorString(d);
+        // return kismet.censorMAC(d);
         /*
         var dname = kismet.censorMAC(d);
         return (dname.length > 24) ? dname.substr(0, 23) + '&hellip;' : dname;
@@ -502,14 +504,21 @@ kismet_ui.AddDeviceDetail("base", "Device Info", -1000, {
                 help: "Device name, derived from device characteristics or set as a custom name by the user.",
                 draw: function(opts) {
                     var name = opts['data']['kismet.device.base.username'];
+
+                    if (typeof(name) != 'undefined' && name != "") { 
+                        name = kismet.censorString(name);
+                    }
                     
-                    if (typeof(name) == 'undefined' || name == "")
+                    if (typeof(name) == 'undefined' || name == "") { 
                         name = opts['data']['kismet.device.base.commonname'];
+                        name = kismet.censorString(name);
+                    }
 
-                    if (typeof(name) == 'undefined' || name == "")
+                    if (typeof(name) == 'undefined' || name == "") {
                         name = opts['data']['kismet.device.base.macaddr'];
+                        name = kismet.censorMAC(name);
+                    }
 
-                    name = kismet.censorMAC(name);
 
                     var nameobj = 
                         $('<a>', {
@@ -713,12 +722,14 @@ kismet_ui.AddDeviceDetail("base", "Device Info", -1000, {
                                     options: {
                                         maintainAspectRatio: false,
                                         animation: false,
-                                        legend: {
-                                            display: false,
-                                        },
-                                        title: {
-                                            display: true,
-                                            text: 'Packet frequency distribution'
+                                        plugins: { 
+                                            legend: {
+                                                display: false,
+                                            },
+                                            title: {
+                                                display: true,
+                                                text: 'Packet frequency distribution'
+                                            }
                                         }
                                     }
                                 });
@@ -801,9 +812,9 @@ kismet_ui.AddDeviceDetail("base", "Device Info", -1000, {
 
                         rrdiv.sparkline(moddata, { type: "bar",
                             height: 12,
-                            barColor: '#000000',
-                            nullColor: '#000000',
-                            zeroColor: '#000000'
+                            barColor: kismet_theme.sparkline_main,
+                            nullColor: kismet_theme.sparkline_main,
+                            zeroColor: kismet_theme.sparkline_main,
                         });
 
                     }
@@ -1100,23 +1111,23 @@ kismet_ui.AddDeviceDetail("packets", "Packet Graphs", 10, {
 
             m.sparkline(mdata, { type: "bar",
                     height: 12,
-                    barColor: '#000000',
-                    nullColor: '#000000',
-                    zeroColor: '#000000'
+                barColor: kismet_theme.sparkline_main,
+                nullColor: kismet_theme.sparkline_main,
+                zeroColor: kismet_theme.sparkline_main,
                 });
             h.sparkline(hdata,
                 { type: "bar",
                     height: 12,
-                    barColor: '#000000',
-                    nullColor: '#000000',
-                    zeroColor: '#000000'
+                    barColor: kismet_theme.sparkline_main,
+                    nullColor: kismet_theme.sparkline_main,
+                    zeroColor: kismet_theme.sparkline_main,
                 });
             d.sparkline(ddata,
                 { type: "bar",
                     height: 12,
-                    barColor: '#000000',
-                    nullColor: '#000000',
-                    zeroColor: '#000000'
+                    barColor: kismet_theme.sparkline_main,
+                    nullColor: kismet_theme.sparkline_main,
+                    zeroColor: kismet_theme.sparkline_main,
                 });
         } else {
             m.html("<i>No packet data available</i>");
@@ -1133,23 +1144,23 @@ kismet_ui.AddDeviceDetail("packets", "Packet Graphs", 10, {
         dm.sparkline(dmdata,
             { type: "bar",
                 height: 12,
-                barColor: '#000000',
-                nullColor: '#000000',
-                zeroColor: '#000000'
+                barColor: kismet_theme.sparkline_main,
+                nullColor: kismet_theme.sparkline_main,
+                zeroColor: kismet_theme.sparkline_main,
             });
         dh.sparkline(dhdata,
             { type: "bar",
                 height: 12,
-                barColor: '#000000',
-                nullColor: '#000000',
-                zeroColor: '#000000'
+                barColor: kismet_theme.sparkline_main,
+                nullColor: kismet_theme.sparkline_main,
+                zeroColor: kismet_theme.sparkline_main,
             });
         dd.sparkline(dddata,
             { type: "bar",
                 height: 12,
-                barColor: '#000000',
-                nullColor: '#000000',
-                zeroColor: '#000000'
+                barColor: kismet_theme.sparkline_main,
+                nullColor: kismet_theme.sparkline_main,
+                zeroColor: kismet_theme.sparkline_main,
             });
         }
 
@@ -1337,26 +1348,26 @@ function memorydisplay_refresh() {
         $('#k_mm_devs', memory_panel.content).html(`${dev_linedata[dev_linedata.length - 1]} devices`);
         $('#k_mm_ram', memory_panel.content).html(`${mem_linedata[mem_linedata.length - 1]} MB`);
 
-        var datasets = [
-            {
-                label: 'Memory (MB)',
-                fill: 'false',
-                // yAxisID: 'mem-axis',
-                borderColor: 'black',
-                backgroundColor: 'transparent',
-                data: mem_linedata,
-            },
-            {
-                label: 'Devices',
-                fill: 'false',
-                // yAxisID: 'dev-axis',
-                borderColor: 'blue',
-                backgroundColor: 'rgba(100, 100, 255, 0.33)',
-                data: dev_linedata,
-            }
-        ];
-
         if (memory_chart == null) {
+            var datasets = [
+                {
+                    label: 'Memory (MB)',
+                    fill: 'false',
+                    // yAxisID: 'mem-axis',
+                    borderColor: 'black',
+                    backgroundColor: 'transparent',
+                    data: mem_linedata,
+                },
+                {
+                    label: 'Devices',
+                    fill: 'false',
+                    // yAxisID: 'dev-axis',
+                    borderColor: 'blue',
+                    backgroundColor: 'rgba(100, 100, 255, 0.33)',
+                    data: dev_linedata,
+                }
+            ];
+
             var canvas = $('#k-mm-canvas', memory_panel.content);
 
             memory_chart = new Chart(canvas, {
@@ -1391,9 +1402,11 @@ function memorydisplay_refresh() {
             });
 
         } else {
-            memory_chart.data.datasets = datasets;
+            memory_chart.data.datasets[0].data = mem_linedata;
+            memory_chart.data.datasets[1].data = dev_linedata;
+            // memory_chart.data.datasets = datasets;
             memory_chart.data.labels = pointtitles;
-            memory_chart.update(0);
+            memory_chart.update();
         }
     })
     .always(function() {
@@ -1537,8 +1550,8 @@ function packetqueuedisplay_refresh() {
             {
                 label: 'Incoming packets (peak)',
                 fill: 'false',
-                borderColor: 'black',
-                backgroundColor: 'rgba(100, 100, 100, 0.33)',
+                borderColor: kismet_theme.graphBasicColor,
+                backgroundColor: kismet_theme.graphBasicBackgroundColor,
                 data: peak_linedata,
             },
             {
@@ -1593,7 +1606,7 @@ function packetqueuedisplay_refresh() {
                     responsive: true,
                     maintainAspectRatio: false,
                     scales: {
-                        yAxes: [
+                        yAxis: [
                             {
                                 position: "left",
                                 "id": "mem-axis",
@@ -2723,22 +2736,12 @@ kismet_ui_tabpane.AddTab({
     expandable: false,
     createCallback: function(div) {
         div.append(
-            $('<div>', {
-                class: 'resize_wrapper',
-            })
-            .append(
                 $('<table>', {
                     id: 'devices',
-                    class: 'fixeddt stripe hover nowrap',
+                    class: 'fixeddt stripe hover nowrap pageResize',
                     'cell-spacing': 0,
                     width: '100%',
                 })
-            )
-        ).append(
-            $('<div>', {
-                id: 'devices_status',
-                style: 'padding-bottom: 10px;',
-            })
         );
 
         kismet_ui.CreateDeviceTable($('#devices', div));

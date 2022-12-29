@@ -347,76 +347,22 @@ exports.censorLocation = function(t) {
     }
 }
 
-// utf8 to unicode converter (used below in deoctalize()).
-// "fatal: true" means that the converter will throw an 
-// exception if the input is not valid utf8.
-exports.decoder = new TextDecoder('utf8', {fatal: true});
-
-/* De-octalize an escaped string, and decode it from utf8.
- * If the input string contains anything unexpected (control
- * characters, invalid values after the backslash, character
- * sequences that are not valid utf8), return the input string.
- * */
-exports.deoctalize = function(str) {
-    var ret = new Array();
-
-    for (var i = 0; i < str.length; i++) {
-        // If the current character is not a backslash, 
-        // do not modify it.
-        if (str[i] != '\\') {
-            ret.push(str.charCodeAt(i))
-        // If the current character (a backslash) is followed by a 
-        // second backslash, remove the second backslash;
-        // no other modification needed.
-        } else if (i+1 < str.length && str[i+1] == '\\') {
-            ret.push(str.charCodeAt(i));
-            i++;
-        // If the backslash is followed by a 3-digit octal number
-        // in the range 000 to 377, replace the backslash and
-        // numerals by the corresponding octal character
-        } else if (i + 3 < str.length && str[i + 1] >= '0' && str[i+1] <= '3' &&
-                str[i + 2] >= '0' && str[i+2] <= '7' &&
-                str[i + 3] >= '0' && str[i+3] <= '7') {
-
-                var sum = 
-                    ((str[i + 1] - '0') * 64) +
-                    ((str[i + 2] - '0') * 8) +
-                    ((str[i + 3] - '0'));
-
-                // If the octal character is less than 32 decimal,
-                // then it is a control (non-printing) character.
-                // In this case, dont' de-octalize the input string;
-                // immediately return the entire input string.
-                if (sum < 32) {
-                    return str;
-                } else {
-                    ret.push(sum);
-                }
-
-                i += 3;
-	// This clause is reached only if a backslash was encountered,
-        // but the backslash was not followed by either another
-        // backslash or by 3 valid octal digits.  This means that
-        // the input string is not a valid octalized string, so we
-        // don't know how to de-octalize it.  In this case, return
-        // the input string.
-	} else {
-            return str;
+/* Censor a string by obscuring most of the contents */
+exports.censorString = function(t) { 
+    try { 
+        if (window['censor_macs']) { 
+            if (t.length < 6) { 
+                return new Array(t.length + 1).join('X');
+            } else { 
+                return t.substring(0, 2) + (new Array(t.length - 3).join('X')) + t.substring(t.length - 2, t.length);
+            }
+        } else { 
+            return t;
         }
-    }
-
-    try {
-        // Try to convert the de-octalized string from utf8 to
-        // unicode.
-        return exports.decoder.decode(Uint8Array.from(ret))
-    } catch(e) {
-        // The de-octalized string was not valid utf8, so we don't
-        // know how to convert it.  In this case, return the input
-        // string.
-        return str;
+    } catch (e) { 
+        return t;
     }
 }
-
 
 /* Recurse over a complete object (such as from json), finding all strings,
  * and escaping them to be 'safe' */
@@ -426,7 +372,7 @@ exports.sanitizeObject = function(o) {
     }
 
     if (typeof(o) === 'string') {
-        return exports.sanitizeHTML(exports.deoctalize(o));
+        return exports.sanitizeHTML(o);
     }
 
     Object.keys(o).forEach(function(key) {
@@ -449,6 +395,45 @@ String.prototype.convertNewlines = function() {
     s = s.replace(/\\r/g, "");
 
     return s;
+}
+
+String.prototype.MiddleShorten = function(len) { 
+    if (this.length > len) {
+        let epos = len / 2;
+        let lpos = this.length - (len / 2);
+
+        while (epos > 1 && this.substr(epos - 1, 1) == ' ') { 
+            epos = epos - 1;
+        }
+
+        while (lpos < len && this.substr(lpos, 1) == ' ') { 
+            lpos = lpos + 1;
+        }
+
+        return this.substr(0,epos) + '...' + this.substr(lpos, this.length);
+    }
+
+    return this;
+}
+
+exports.ExtractDeviceName = function(device) { 
+    var ret = device['kismet.device.base.username'];
+    if (ret != null && ret != '') { 
+        return exports.censorString(ret);
+    }
+
+    ret = device['kismet.device.base.name'];
+    if (ret != null && ret != '') { 
+        return exports.censorString(ret);
+    }
+
+    ret = device['kismet.device.base.commonname'];
+    if (ret != null && ret != '') { 
+        return exports.censorString(ret);
+    }
+
+    ret = device['kismet.device.base.macaddr'];
+    return exports.censorMAC(ret);
 }
 
 return exports;

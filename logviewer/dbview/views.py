@@ -4,6 +4,8 @@ import os
 import sqlite3
 import time
 import json
+import websockets
+
 import pprint
 
 from django.views.decorators.csrf import csrf_exempt
@@ -118,7 +120,7 @@ def index(request):
                 ssid_list = ssid_list + "},"
             except:
                 ssid_list = ssid_list[:-1]
-                print("Skipping")
+                #print("Skipping")
         ssid_list = ssid_list[:-2]+ "}], \"draw\": 3, \"recordsFiltered\": "+str(ssid_count[0][0])+" }"
         return HttpResponse(ssid_list, content_type='text/json')
     elif request.path == "/system/status.json":

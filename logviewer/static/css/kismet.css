@@ -1,9 +1,22 @@
+:root {
+    --main-background-color: #FFF;
+    --main-text-color: #000;
+}
+
+[data-theme="dark"] {
+    --main-background-color: #222;
+    --main-text-color: #FFF;
+}
+
+
 html, body {
     height: 100%
 }
 
 body {
     overflow: hidden;
+    background-color: --var(--main-background-color);
+    color: --var(--main-text-color);
 }
 
 #mainholder {
@@ -50,7 +63,7 @@ body {
     bottom: 30px; 
     */
 
-    background-color: #cccccc;
+    background-color: #ccc;
     font-size: 13px;
     height: 20px;
 }
@@ -75,7 +88,7 @@ body {
     position: relative;
     overflow: hidden !important;
     height: 40px;
-    background-color: #CCCCCC;
+    background-color: #ccc;
     padding-left: 10px;
     padding-right: 10px;
 }
