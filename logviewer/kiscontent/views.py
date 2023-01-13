@@ -18,3 +18,5 @@ def index(request, loadfile):
         return HttpResponse(load_file, content_type='image/png')
     elif request.path[0:7] == "/images":
         return HttpResponse(load_file, content_type='image/png')
+    elif request.path == "/favicon.ico":
+        return HttpResponse(load_file, content_type='image/ico')
