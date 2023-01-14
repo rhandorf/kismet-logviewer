@@ -148,3 +148,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 ALLOWED_HOSTS = ['sdr-cabinet', 'sdr-cabinet.dyn.spangdorfia.com']
 
 ASGI_APPLICATION = 'logviewer.asgi.application'
+
+X_FRAME_OPTIONS = 'SAMEORIGIN'

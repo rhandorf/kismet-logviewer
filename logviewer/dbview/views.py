@@ -187,7 +187,7 @@ def index(request):
                 dev_list = list(load_db("select cast(device as text) from devices LIMIT "+limit+" OFFSET "+start))
             else:
                 dev_list = list(load_db("select cast(device as text) from devices where cast(device as text) like '%"+search+"%' LIMIT "+limit+" OFFSET "+start))
-        elif device_request == "phy_RTLADSB":
+        elif device_request == "phy-RTLADSB":
             if search == "":
                 dev_list = list(load_db("select cast(device as text) from devices where phyname = 'ADSB' LIMIT "+limit+" OFFSET "+start))
             else:
@@ -242,7 +242,7 @@ def index(request):
                 dev_list = list(load_db("select cast(device as text) from devices where phyname = 'UAV' LIMIT "+limit+" OFFSET "+start))
             else:
                 dev_list = list(load_db("select cast(device as text) from devices where cast(device as text) like '%"+search+"%' and phyname = 'UAV' LIMIT "+limit+" OFFSET "+start))
-        elif device_request == "phy-Zwave":
+        elif device_request == "phy-Z-Wave":
             if search == "":
                 dev_list = list(load_db("select cast(device as text) from devices where phyname = 'Z-Wave' LIMIT "+limit+" OFFSET "+start))
             else:
@@ -329,3 +329,53 @@ def index(request):
         multikey = multikey[:-1]
         multikey = multikey + "}"
         return HttpResponse(multikey, content_type='text/json')
+    elif request.path == "/phy/ADSB/map_data.json":
+        #I had to do a stupid lat/long offset to draw the map grid because for some stupid reason python wouldnt do number scales right?
+        #limiting to 100 until i figure out paging
+        min_long = 361.0
+        max_long = 0.0
+        min_lat = 181.0
+        max_lat = 0.0
+        adsblist = "{ \"kismet.adsb.map.devices\": [ "
+        dev_list = list(load_db("select cast(device as text) from devices where phyname = 'ADSB' limit 100"))
+        for device in dev_list:
+            (dev,) = device
+            dev_json = json.loads(dev)
+            newdev = {}
+            newdev['kismet.device.base.first_time'] = dev_json['kismet.device.base.first_time']
+            if "kismet.device.base.location" in dev_json:
+                newdev['kismet.device.base.location'] = dev_json['kismet.device.base.location']
+                (tmp_min_long,tmp_min_lat) = newdev['kismet.device.base.location']['kismet.common.location.min_loc']['kismet.common.location.geopoint']
+                tmp_min_lat = round(tmp_min_lat + 91, 6)
+                tmp_min_long = round(tmp_min_long + 181, 6)
+                if (tmp_min_lat != 91 and tmp_min_long !=181): 
+                  if (tmp_min_lat < min_lat):
+                      min_lat = tmp_min_lat
+                  if (tmp_min_long < min_long):
+                      min_long = tmp_min_long
+                (tmp_max_long,tmp_max_lat) = newdev['kismet.device.base.location']['kismet.common.location.max_loc']['kismet.common.location.geopoint']
+                tmp_max_lat = round(tmp_max_lat + 91,6)
+                tmp_max_long = round(tmp_max_long +181,6)
+                if (tmp_max_lat != 91 and tmp_max_long !=181):
+                    if (tmp_max_lat > max_lat):
+                        max_lat = tmp_max_lat
+                    if (tmp_max_long > max_long):
+                        max_long = tmp_max_long
+            newdev['kismet.device.base.macaddr'] = dev_json['kismet.device.base.macaddr']
+            newdev['adsb.device'] = dev_json['adsb.device']
+            newdev['kismet.device.base.type'] = dev_json['kismet.device.base.type']
+            newdev['kismet.device.base.commonname'] = dev_json['kismet.device.base.commonname']
+            newdev['kismet.device.base.name'] = dev_json['kismet.device.base.name']
+            newdev['kismet.device.base.packets.data'] = dev_json['kismet.device.base.packets.data']
+            newdev['kismet.device.base.frequency'] = dev_json['kismet.device.base.frequency']
+            newdev['kismet.device.base.phyname'] = dev_json['kismet.device.base.phyname']
+            newdev['kismet.device.base.last_time'] = dev_json['kismet.device.base.last_time']
+            newdev['kismet.device.base.key'] = dev_json['kismet.device.base.key']
+            adsblist = adsblist + json.dumps(newdev) + ","
+        adsblist = adsblist[:-1]
+        min_lat = round(min_lat - 91, 6)
+        min_long = round(min_long - 181, 6)
+        max_lat = round(max_lat - 91, 6)
+        max_long = round(max_long - 181, 6)
+        adsblist = adsblist + " ], \"kismet.adsb.map.min_lon\": "+str(min_long) + ", \"kismet.adsb.map.max_lat\": "+str(max_lat)+", \"kismet.adsb.map.min_lat\": "+str(min_lat)+", \"kismet.adsb.map.max_lon\": "+str(max_long)+" }"
+        return HttpResponse(adsblist, content_type='text/json')
