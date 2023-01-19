@@ -1,0 +1,4 @@
+Django==4.1.4
+daphne==4.0.0
+attrs==22.2.0
+channels==4.0.0
