@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>live russ map</title>
+
+    <script src="js/jquery-3.1.0.min.js"></script>
+    <script src="js/chart.umd.js"></script>
+    <script src="js/js.storage.min.js"></script>
+    <script src="js/kismet.ui.theme.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="css/font-awesome.min.css">
+    <link rel="stylesheet" href="css/leaflet.css" />
+    <link rel="stylesheet" type="text/css" href="css/jquery.jspanel.min.css" />
+    <link rel="stylesheet" type="text/css" href="css/Control.Loading.css" />
+
+    <script src="js/leaflet.js"></script>
+    <script src="js/Leaflet.MultiOptionsPolyline.min.js"></script>
+    <script src="js/Control.Loading.js"></script>
+    <script src="js/chroma.min.js"></script>
+
+    <script src="js/js.storage.min.js"></script>
+    <script src="js/kismet.utils.js"></script>
+    <script src="js/kismet.units.js"></script>
+
+    <script src="js/datatables.min.js"></script>
+    <script src="js/dataTables.scrollResize.js"></script>
+
+    <style>
+        :root {
+            --adsb-sidebar-background: white;
+            --adsb-sidebar-background-offset: #f9f9f9;
+        }
+
+        [data-theme="dark"] {
+            --adsb-sidebar-background: #222;
+            --adsb-sidebar-background-offset: #444;
+            --map-tiles-filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7);
+        }
+
+        .map-tiles {
+            filter: var(--map-tiles-filter, none);
+        }
+
+        body {
+            padding: 0;
+            margin: 0;
+        }
+
+        html, body, #map {
+            height: 100%;
+            font: 10pt "Helvetica Neue", Arial, Helvetica, sans-serif;
+        }
+
+        .marker-center {
+            margin: 0;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            -ms-transform: translate(-50%, -50%);
+            transform: translate(-50%, -50%);
+        }
+
+        .right-sidebar {
+            position: absolute;
+            top: 10px;
+            bottom: 10px;
+            right: 10px;
+            width: 20%;
+            border: 1px solid black;
+            background: var(--adsb-sidebar-background);
+            z-index: 999;
+            padding: 10px;
+        }
+
+        .warning {
+            position: absolute;
+            top: 10%;
+            bottom: 10%;
+            right: 25%;
+            left: 25%;
+            border: 1px solid black;
+            background: var(--adsb-sidebar-background);
+            z-index: 10000;
+            padding: 10px;
+        }
+
+        #alt_scale {
+            width: 50%;
+            position: absolute;
+            bottom: 10px;
+            left: 25%;
+            height: 15px;
+            z-index: 999;
+            border: 1px solid black;
+            padding-left: 10px;
+            padding-right: 10px;
+            background: linear-gradient(to right, 
+                hsl(50,100%,50%), 
+                hsl(100,100%,50%), 
+                hsl(150,100%,50%), 
+                hsl(200,100%,50%), 
+                hsl(250,100%,50%), 
+                hsl(300,100%,50%), 
+                hsl(360,100%,50%));
+            text-align: center;
+        }
+
+        #alt_min {
+            position: absolute;
+            left: 10px;
+        }
+
+        #alt_mini {
+            position: absolute;
+            left: 25%;
+        }
+
+        #alt_maxi {
+            position: absolute;
+            left: 75%;
+        }
+
+        #alt_max {
+            position: absolute;
+            right: 10px;
+        }
+
+        #alt_title {
+            display: inline-block;
+        }
+
+        .resize_wrapper {
+            position: relative;
+            box-sizing: border-box;
+            height: calc(100% - 125px);
+            padding: 0.5em 0.5em 1.5em 0.5em;
+            border-radius: 0.5em;
+            background: var(--adsb-sidebar-background-offset);
+            overflow: hidden;
+        }
+
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <script src="/js/leaflet-heat.js"></script>
+    <script src="/js/testdata.js"></script>
+    <script>
+	var map = L.map('map').setView([-37.87, 175.475], 12);
+
+	var tiles = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+	    attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors',
+	}).addTo(map);
+
+	addressPoints = addressPoints.map(function (p) { return [p[0], p[1]]; });
+
+	var heat = L.heatLayer(addressPoints).addTo(map);
+
+        var window_visible = true;
+
+        // Visibility detection from https://developer.mozilla.org/en-US/docs/Web/API/Page_Visibility_API
+        // Set the name of the hidden property and the change event for visibility
+        var hidden, visibilityChange; 
+        if (typeof document.hidden !== "undefined") { // Opera 12.10 and Firefox 18 and later support 
+            hidden = "hidden";
+            visibilityChange = "visibilitychange";
+        } else if (typeof document.msHidden !== "undefined") {
+            hidden = "msHidden";
+            visibilityChange = "msvisibilitychange";
+        } else if (typeof document.webkitHidden !== "undefined") {
+            hidden = "webkitHidden";
+            visibilityChange = "webkitvisibilitychange";
+        }
+
+        function handleVisibilityChange() {
+            if (document[hidden]) {
+                window_visible = false;
+            } else {
+                window_visible = true;
+            }
+        }
+
+        function map_cb(d) {
+	    console.log("and here");
+            data = kismet.sanitizeObject(d);
+
+            // $('#count').html("Active in the last 10 minutes: " + data['kismet.adsb.map.devices'].length);
+            $('#numplanes').html(data['kismet.adsb.map.devices'].length);
+
+            if (!map_configured) {
+                var lat1 = data['kismet.russ.map.min_lat'];
+                var lon1 = data['kismet.russ.map.min_lon'];
+                var lat2 = data['kismet.russ.map.max_lat'];
+                var lon2 = data['kismet.russ.map.max_lon'];
+
+                map = L.map('map', {
+                    loadingControl: true
+                });
+                map.fitBounds([[lat1, lon1], [lat2, lon2]])
+                L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+                    className: 'map-tiles',
+                }).addTo(map);
+
+                map_configured = true;
+            }
+	    var dt = $('#datapoints').DataTable();
+	    dt.clear();
+	    alert('here');
+            for (var d = 0; d < data.length; d++) {
+		    try {
+			    console.log(d);
+			    dt.row.add(d);
+		    } catch (error) {
+			    console.log("Error");
+                        ;
+                    }
+	    }
+	}
+
+        function poll_map() {
+                $.get(local_uri_prefix + KISMET_PROXY_PREFIX + "phy/RUSS/map_data.json")
+                    .done(function(d) {
+			console.log("uNF");
+                        map_cb(d);
+                    })
+        }
+
+        // Warn if the browser doesn't support addEventListener or the Page Visibility API
+        if (typeof document.addEventListener === "undefined" || hidden === undefined) {
+            ; // Do nothing
+        } else {
+            // Handle page visibility change   
+            document.addEventListener(visibilityChange, handleVisibilityChange, false);
+        }
+
+        var urlparam = new URL(window.location.href);
+        var param_url = urlparam.searchParams.get('parent_url') + "/";
+        var param_prefix = urlparam.searchParams.get('local_uri_prefix', "");
+        var KISMET_PROXY_PREFIX = urlparam.searchParams.get('KISMET_PROXY_PREFIX', "");
+
+        if (param_prefix == 0)
+            param_prefix=""
+
+        var local_uri_prefix = param_url + param_prefix;
+        if (typeof(KISMET_URI_PREFIX) !== 'undefined')
+            local_uri_prefix = KISMET_URI_PREFIX;
+
+        var map_configured = true; //set back to false once i fix the json parsing
+
+        var map = null;
+        poll_map();
+    </script>
+</body>
+</html>

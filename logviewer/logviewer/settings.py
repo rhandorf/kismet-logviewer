@@ -27,7 +27,7 @@ SECRET_KEY = 'django-insecure-%9bti-7!h)!k2gi)4dq93^t=08()d8^aevt!1$nqlqg_x4k3qr
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+#ALLOWED_HOSTS = []
 
 
 # Application definition
@@ -145,7 +145,7 @@ TEMPLATES = [
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-ALLOWED_HOSTS = ['sdr-cabinet', 'sdr-cabinet.dyn.spangdorfia.com']
+ALLOWED_HOSTS = ['*']
 
 ASGI_APPLICATION = 'logviewer.asgi.application'
 

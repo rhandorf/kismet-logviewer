@@ -309,6 +309,65 @@ def index(request):
         return HttpResponse(dev_string, content_type='text/json')
     elif request.path == "/eventbus/events.ws":
         return HttpResponse("[]", content_type='text/json')
+    elif request.path == "/phy/RUSS/map_data.json":
+        min_long = 361.0
+        max_long = 0.0
+        min_lat = 181.0
+        max_lat = 0.0
+        multikey = "{}"
+        russlist = "{ \"kismet.wireless.map.devices\": [ "
+        dev_list = list(load_db("select cast(device as text) from devices where (phyname = 'Bluetooth' or phyname = 'IEEE802.11') and cast(device as text) like '%kismet.common.location.geopoint%'"))
+        for device in dev_list:
+            (dev,) = device
+            dev_json = json.loads(dev)
+            newdev = {}
+            newdev['kismet.device.base.first_time'] = dev_json['kismet.device.base.first_time']
+            try:
+              (tmp_min_long,tmp_min_lat) = dev_json['kismet.device.base.location']['kismet.common.location.min_loc']['kismet.common.location.geopoint']
+              tmp_min_lat = round(tmp_min_lat + 91, 6)
+              tmp_min_long = round(tmp_min_long + 181, 6)
+              if (tmp_min_lat != 91 and tmp_min_long !=181):
+                  if (tmp_min_lat < min_lat):
+                      min_lat = tmp_min_lat
+                  if (tmp_min_long < min_long):
+                      min_long = tmp_min_long
+              (tmp_max_long,tmp_max_lat) = dev_json['kismet.device.base.location']['kismet.common.location.max_loc']['kismet.common.location.geopoint']
+              tmp_max_lat = round(tmp_max_lat + 91,6)
+              tmp_max_long = round(tmp_max_long +181,6)
+              if (tmp_max_lat != 91 and tmp_max_long !=181):
+                  if (tmp_max_lat > max_lat):
+                      max_lat = tmp_max_lat
+                  if (tmp_max_long > max_long):
+                      max_long = tmp_max_long
+              russlist = russlist + str(dev_json['kismet.device.base.location']['kismet.common.location.avg_loc']['kismet.common.location.geopoint']) + ","
+            except:
+                try:
+                  (tmp_min_long,tmp_min_lat) = dev_json['dot11.device']['dot11.device.client_map']['dot11.client.location']['kismet.common.location.min_loc']['kismet.common.location.geopoint']
+                  tmp_min_lat = round(tmp_min_lat + 91, 6)
+                  tmp_min_long = round(tmp_min_long + 181, 6)
+                  if (tmp_min_lat != 91 and tmp_min_long !=181):
+                      if (tmp_min_lat < min_lat):
+                         min_lat = tmp_min_lat
+                      if (tmp_min_long < min_long):
+                         min_long = tmp_min_long
+                  (tmp_max_long,tmp_max_lat) = dev_json['dot11.device']['dot11.device.client_map']['dot11.client.location']['kismet.common.location.max_loc']['kismet.common.location.geopoint']
+                  tmp_max_lat = round(tmp_max_lat + 91,6)
+                  tmp_max_long = round(tmp_max_long +181,6)
+                  if (tmp_max_lat != 91 and tmp_max_long !=181):
+                      if (tmp_max_lat > max_lat):
+                          max_lat = tmp_max_lat
+                      if (tmp_max_long > max_long):
+                          max_long = tmp_max_long
+                  russlist = russlist + str(dev_json['dot11.device']['dot11.device.client_map']['dot11.client.location']['kismet.common.location.avg_loc']['kismet.common.location.geopoint']) + ","
+                except:
+                  print("poop")
+        russlist = russlist[:-1]
+        min_lat = round(min_lat - 91, 6)
+        min_long = round(min_long - 181, 6)
+        max_lat = round(max_lat - 91, 6)
+        max_long = round(max_long - 181, 6)
+        russlist = russlist + " ], \"kismet.wireless.map.min_lon\": "+str(min_long) + ", \"kismet.wireless.map.max_lat\": "+str(max_lat)+", \"kismet.wireless.map.min_lat\": "+str(min_lat)+", \"kismet.wireless.map.max_lon\": "+str(max_long)+" }"
+        return HttpResponse(russlist, content_type='text/json')
     elif request.path == "/devices/multikey/as-object/devices.json":
         #ClientMap incomplete.... figure out where the rest of the JSON comes from
         search_json = ""
