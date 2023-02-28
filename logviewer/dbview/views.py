@@ -309,6 +309,22 @@ def index(request):
         return HttpResponse(dev_string, content_type='text/json')
     elif request.path == "/eventbus/events.ws":
         return HttpResponse("[]", content_type='text/json')
+    elif request.path == "/phy/DOT/map_data.json":
+        node_list = ""
+        link_list = ""
+        dev_list = list(load_db("select cast(device as text) from devices where phyname = 'IEEE802.11' and cast(device as text) like '%dot11.device.client_map%'"))
+        for device in dev_list:
+            (dev,) = device
+            dev_json = json.loads(dev)
+            newdev = {}
+            node_list = node_list + "{ \"id\": \""+dev_json["kismet.device.base.macaddr"]+"\", \"label\": \""+dev_json["kismet.device.base.macaddr"]+"\", \"level\": 1},"
+            for device in dev_json['dot11.device']['dot11.device.client_map']:
+                node_list = node_list + "{ \"id\": \""+device+"\", \"label\": \""+device+"\", \"level\": 2},"
+                link_list = link_list + "{ \"target\": \""+device+"\", \"source\": \""+dev_json["kismet.device.base.macaddr"]+"\" , \"strength\": 0.7 },"
+        node_list = node_list[:-1]
+        link_list = link_list[:-1]
+        thang="{ \"nodes\": [" +node_list+"], \"links\": [" +link_list+"] }"
+        return HttpResponse(thang, content_type='text/json')
     elif request.path == "/phy/RUSS/map_data.json":
         min_long = 361.0
         max_long = 0.0

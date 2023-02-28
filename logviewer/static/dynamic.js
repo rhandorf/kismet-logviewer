@@ -11,6 +11,7 @@ var kismet_ui_rtl433;
 var kismet_ui_uav;
 var kismet_ui_zwave;
 var kismet_ui_russmap;
+var kismet_ui_dotmap;
 async function load_dynamics() {
 kismet_ui_adsb = await import(`${local_uri_prefix}js/kismet.ui.adsb.js`);
 kismet_ui_bluetooth = await import(`${local_uri_prefix}js/kismet.ui.bluetooth.js`);
@@ -22,4 +23,5 @@ kismet_ui_rtl433 = await import(`${local_uri_prefix}js/kismet.ui.rtl433.js`);
 kismet_ui_uav = await import(`${local_uri_prefix}js/kismet.ui.uav.js`);
 kismet_ui_zwave = await import(`${local_uri_prefix}js/kismet.ui.zwave.js`);
 kismet_ui_russmap = await import(`${local_uri_prefix}js/kismet.ui.russmap.js`);
+kismet_ui_dotmap = await import(`${local_uri_prefix}js/kismet.ui.dotmap.js`);
 }
